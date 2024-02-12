@@ -1,0 +1,34 @@
+{
+  "name": "cms",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A content management system built on the Internet Computer",
+  "author": "Eliezer Rabadon",
+  "license": "MIT",
+  "scripts": {
+    "dfx_install": "DFX_VERSION=0.15.1 sh -ci \"$(curl -fsSL https://sdk.dfinity.org/install.sh)\"",
+    "replica_start": "dfx start --background",
+    "replica_stop": "dfx stop",
+    "canister_deploy_local": "dfx deploy cms",
+    "canister_deploy_mainnet": "dfx deploy --network ic cms",
+    "canister_uninstall": "dfx canister uninstall-code cms",
+    "canister_call": "dfx canister call cms"
+  },
+  "dependencies": {
+    "azle": "^0.18.6",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/uuid": "^9.0.7"
+  },
+  "engines": {
+    "node": "^12 || ^14 || ^16 || ^18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/dvcode.tech/icp-hub/icp-hub-cms-azle"
+  },
+  "bugs": {
+    "url": "https://gitlab.com/dvcode.tech/icp-hub/icp-hub-cms-azle/-/issues"
+  }
+}

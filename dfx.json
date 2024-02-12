@@ -1,0 +1,14 @@
+{
+  "canisters": {
+    "cms": {
+      "type": "custom",
+      "root": "src",
+      "main": "src/index.ts",
+      "ts": "src/index.ts",
+      "candid": "src/index.did",
+      "build": "npx azle cms",
+      "wasm": ".azle/cms/cms.wasm",
+      "gzip": true
+    }
+  }
+}
