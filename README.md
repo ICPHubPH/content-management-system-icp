@@ -14,8 +14,8 @@ You can always refer to [The Azle Book](https://demergent-labs.github.io/azle/) 
 Clone this repository:
 
 ```bash
-git clone https://gitlab.com/dvcode.tech/icp-hub/icp-hub-cms-azle
-cd icp-hub-cms-azle
+git clone https://github.com/ICPHubPH/content-management-system-icp.git
+cd content-management-system-icp
 ```
 
 `dfx` is the tool you will use to interact with the IC locally and on mainnet. If you don't already have it installed:
