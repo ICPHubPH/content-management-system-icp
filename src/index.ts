@@ -49,7 +49,7 @@ const Article = Record({
   date: nat64,
   description: text,
   content: text,
-  editorId: Opt(Principal),
+  editorId: Principal,
   authorId: Principal,
   categoryId: text,
   status: bool,
@@ -132,7 +132,7 @@ export default Canister({
    * Throws error if role is not valid.
    * Throws error if any other error occurs.
    */
-  createUser: update([UserPayload], Result(User, Error), (payload) => {
+  createUser: update([text], Result(User, Error), (name) => {
     try {
       // If user already exists, return error.
       if (userStorage.containsKey(ic.caller())) {
@@ -141,7 +141,7 @@ export default Canister({
       // Create new user, insert it into storage and return it.
       const newUser = {
         id: ic.caller(),
-        name: payload.name,
+        name: name,
         role: "author",
         status: false,
         createdAt: ic.time(),
@@ -170,10 +170,28 @@ export default Canister({
       const user = userStorage.get(payload.userId);
       userStorage.insert(user.Some.id, {
         ...user.Some,
-        status: payload.status,
+        ...payload,
         updatedAt: ic.time(),
       });
       return Ok(user.Some);
+    } catch (error) {
+      // If any error occurs, return it.
+      return Err({ InternalError: `${error}` });
+    }
+  }),
+  /**
+   * Get users.
+   * Returns the users.
+   * Throws error if any other error occurs.
+   * Only the owner can get the users.
+   */
+  getUsers: query([], Result(Vec(User), Error), () => {
+    if (!isOwner(ic.caller().toText())) {
+      return Err({ Forbidden: "Action reserved for the contract owner" });
+    }
+    try {
+      const users = userStorage.values();
+      return Ok(users);
     } catch (error) {
       // If any error occurs, return it.
       return Err({ InternalError: `${error}` });
@@ -238,7 +256,7 @@ export default Canister({
         content: payload.content,
         categoryId: payload.categoryId,
         authorId: ic.caller(),
-        editorId: None,
+        editorId: ic.caller(),
         status: false,
         createdAt: ic.time(),
         updatedAt: ic.time(),
@@ -277,12 +295,8 @@ export default Canister({
         }
       }
 
-      if (userStorage.get(ic.caller()).Some.editorId !== None) {
+      if (currentEditor !== article.Some.authorId) {
         if (userStorage.get(ic.caller()).Some.role !== "editor") {
-          return Err({ Forbidden: "Only editor can edit the articles" });
-        }
-
-        if (ic.caller() != article.Some.editorId) {
           return Err({ Forbidden: "Only editor can edit the articles" });
         }
       } else {
@@ -387,14 +401,18 @@ export default Canister({
    * Throws error if any other error occurs.
    * Only owner can create a new category.
    */
-  createCategory: update([Category], Result(Category, Error), (payload) => {
+  createCategory: update([text], Result(Category, Error), (categoryName) => {
     if (!isOwner(ic.caller().toText())) {
       return Err({ Forbidden: "Action reserved for the contract owner" });
     }
 
     try {
-      categoryStorage.insert(payload.name, payload);
-      return Ok(payload);
+      const newCategory = {
+        id: uuidv4(),
+        name: categoryName,
+      };
+      categoryStorage.insert(newCategory.id, newCategory);
+      return Ok(newCategory);
     } catch (error) {
       // If any error occurs, return it.
       return Err({ InternalError: `${error}` });
@@ -423,6 +441,28 @@ export default Canister({
       }
     }
   ),
+  getArticlesOfAuthor: query([], Result(Vec(Article), Error), () => {
+    try {
+      const articles = articleStorage
+        .values()
+        .filter((article: typeof Article) => article.authorId === ic.caller());
+      return Ok(articles);
+    } catch (error) {
+      // If any error occurs, return it.
+      return Err({ InternalError: `${error}` });
+    }
+  }),
+  getArticlesEditedByEditor: query([], Result(Vec(Article), Error), () => {
+    try {
+      const articles = articleStorage
+        .values()
+        .filter((article: typeof Article) => article.editorId == ic.caller());
+      return Ok(articles);
+    } catch (error) {
+      // If any error occurs, return it.
+      return Err({ InternalError: `${error}` });
+    }
+  }),
 });
 
 // a workaround to make uuid package work with Azle
