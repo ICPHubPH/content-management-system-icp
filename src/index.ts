@@ -94,9 +94,9 @@ const userStorage = StableBTreeMap(Principal, User, 1);
 const articleStorage = StableBTreeMap(text, Article, 2);
 const categoryStorage = StableBTreeMap(text, Category, 3);
 
-function isOwner(caller: string): boolean {
-  const owner = ownerStorage.values()[0];
-  return owner.owner.toText() != caller;
+function isOwner(caller: Principal): boolean {
+  const owner = ownerStorage.get(caller);
+  return owner.Some.id != caller;
 }
 
 export default Canister({
@@ -162,7 +162,7 @@ export default Canister({
    * Only the owner can update the user.
    */
   updateUser: update([UserUpdatePayload], Result(User, Error), (payload) => {
-    if (!isOwner(ic.caller().toText())) {
+    if (!isOwner(ic.caller())) {
       return Err({ Forbidden: "Action reserved for the contract owner" });
     }
 
@@ -186,7 +186,7 @@ export default Canister({
    * Only the owner can get the users.
    */
   getUsers: query([], Result(Vec(User), Error), () => {
-    if (!isOwner(ic.caller().toText())) {
+    if (!isOwner(ic.caller())) {
       return Err({ Forbidden: "Action reserved for the contract owner" });
     }
     try {
@@ -368,7 +368,7 @@ export default Canister({
    * Throws error if any other error occurs.
    */
   getAllArticles: query([], Result(Vec(Article), Error), () => {
-    if (!isOwner(ic.caller().toText())) {
+    if (!isOwner(ic.caller())) {
       return Err({ Forbidden: "Action reserved for the contract owner" });
     }
 
@@ -402,7 +402,7 @@ export default Canister({
    * Only owner can create a new category.
    */
   createCategory: update([text], Result(Category, Error), (categoryName) => {
-    if (!isOwner(ic.caller().toText())) {
+    if (!isOwner(ic.caller())) {
       return Err({ Forbidden: "Action reserved for the contract owner" });
     }
 
