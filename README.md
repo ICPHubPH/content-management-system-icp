@@ -55,11 +55,20 @@ Assuming you have [created a cycles wallet](https://internetcomputer.org/docs/cu
 npm run canister_deploy_mainnet
 ```
 
+## Deploying Local Internet Identity Instance
+
+To deploy the local Internet Identity instance, run:
+
+```bash
+npm run internet_identity_deploy_local
+```
+
 ## Methods
 
 - **initOwner**: This method is used to initialize the owner of the contract.
 - **createUser**: This method is used to create a new user. There are two valid user roles, `author` for users who creates the articles and `editor` for editing and approval of the articles.
 - **updateUser**: This method is used to update the user's role. Only the owner of the contract can use this method.
+- **getUsers**: This method is used to retrieve all users. Only the owner of the contract can use this method.
 - **getMe**: This method is used to retrieve the current user.
 - **createArticle**: This method is used to create a new article. Only users with the `author` role can use this method.
 - **updateArticle**: This method is used to update an article. The `author` can indefinitely edit the article as long as the editorId is None.
@@ -69,6 +78,8 @@ npm run canister_deploy_mainnet
 - **getAllCategories**: This method is used to retrieve all categories.
 - **createCategory**: This method is used to create category. Only the owner of the contract can use this method.
 - **getActiveArticlesByCategory**: This method is used to retrieve articles by categoryId.
+- **getArticlesOfAuthor**: This method is used to retrieve all articles of an author. Only the author can use this method.
+- **getArticlesEditedByEditor**: This method is used to retrieve all articles edited by the editor. Only the editor can use this method.
 
 ## License
 
