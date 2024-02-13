@@ -12,6 +12,8 @@
     "canister_deploy_local": "dfx deploy cms",
     "canister_deploy_mainnet": "dfx deploy --network ic cms",
     "canister_uninstall": "dfx canister uninstall-code cms",
+    "internet_identity_deploy_local": "dfx deploy internet_identity",
+    "internet_identity_uninstall": "dfx canister uninstall-code internet_identity",
     "canister_call": "dfx canister call cms"
   },
   "dependencies": {
