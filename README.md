@@ -63,6 +63,14 @@ To deploy the local Internet Identity instance, run:
 npm run internet_identity_deploy_local
 ```
 
+## Generating declarations
+
+To generate declarations for your dapp, run:
+
+```bash
+dfx generate cms
+```
+
 ## Methods
 
 - **initOwner**: This method is used to initialize the owner of the contract.
