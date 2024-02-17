@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "dfx_install": "DFX_VERSION=0.15.1 sh -ci \"$(curl -fsSL https://sdk.dfinity.org/install.sh)\"",
-    "replica_start": "dfx start --background",
+    "replica_start": "dfx start --clean --background",
     "replica_stop": "dfx stop",
     "canister_deploy_local": "dfx deploy cms",
     "canister_deploy_mainnet": "dfx deploy --network ic cms",
