@@ -49,8 +49,8 @@ const Article = Record({
   date: nat64,
   description: text,
   content: text,
-  editorId: Principal,
-  authorId: Principal,
+  editorId: text,
+  authorId: text,
   categoryId: text,
   status: bool,
   createdAt: nat64,
@@ -63,20 +63,20 @@ const UserPayload = Record({
 });
 
 const UserUpdatePayload = Record({
-  userId: Principal,
-  name: Opt(text),
-  role: Opt(text),
-  status: Opt(bool),
+  id: Principal,
+  name: text,
+  role: text,
+  status: bool,
 });
 
 const ArticlePayload = Record({
-  id: Opt(text),
+  id: text,
   title: text,
   date: nat64,
   description: text,
   content: text,
   categoryId: text,
-  status: Opt(bool),
+  status: bool,
 });
 
 // Initialize error variants.
@@ -89,14 +89,13 @@ const Error = Variant({
 });
 
 // Initialize storages.
-const ownerStorage = StableBTreeMap(Principal, Owner, 0);
-const userStorage = StableBTreeMap(Principal, User, 1);
-const articleStorage = StableBTreeMap(text, Article, 2);
-const categoryStorage = StableBTreeMap(text, Category, 3);
+const ownerStorage = StableBTreeMap(0, Principal, Owner);
+const userStorage = StableBTreeMap(1, Principal, User);
+const articleStorage = StableBTreeMap(2, text, Article);
+const categoryStorage = StableBTreeMap(3, text, Category);
 
 function isOwner(caller: Principal): boolean {
-  const owner = ownerStorage.get(caller);
-  return owner.Some.id != caller;
+  return ownerStorage.containsKey(caller);
 }
 
 export default Canister({
@@ -133,14 +132,16 @@ export default Canister({
    * Throws error if any other error occurs.
    */
   createUser: update([text], Result(User, Error), (name) => {
+    let currentPrincipal = ic.caller();
+
     try {
       // If user already exists, return error.
-      if (userStorage.containsKey(ic.caller())) {
+      if (userStorage.containsKey(currentPrincipal)) {
         return Err({ BadRequest: "You already have an account" });
       }
       // Create new user, insert it into storage and return it.
       const newUser = {
-        id: ic.caller(),
+        id: currentPrincipal,
         name: name,
         role: "author",
         status: false,
@@ -167,10 +168,12 @@ export default Canister({
     }
 
     try {
-      const user = userStorage.get(payload.userId);
+      const user = userStorage.get(payload.id);
       userStorage.insert(user.Some.id, {
         ...user.Some,
-        ...payload,
+        name: payload.name,
+        role: payload.role,
+        status: payload.status,
         updatedAt: ic.time(),
       });
       return Ok(user.Some);
@@ -204,14 +207,16 @@ export default Canister({
    * Throws error if any other error occurs.
    */
   getMe: query([], Result(User, Error), () => {
+    let currentPrincipal = ic.caller();
+
     try {
       // If user does not exist, return error.
-      if (!userStorage.containsKey(ic.caller())) {
+      if (!userStorage.containsKey(currentPrincipal)) {
         return Err({ Unauthorized: "Create an account first" });
       }
 
       // Return the current user.
-      const user = userStorage.get(ic.caller());
+      const user = userStorage.get(currentPrincipal);
       return Ok(user.Some);
     } catch (error) {
       // If any error occurs, return it.
@@ -235,13 +240,15 @@ export default Canister({
    * The updatedAt will be the current time.
    */
   createArticle: update([ArticlePayload], Result(Article, Error), (payload) => {
+    let currentPrincipal = ic.caller();
+
     try {
       // If user does not exist, return error.
-      if (!userStorage.containsKey(ic.caller())) {
+      if (!userStorage.containsKey(currentPrincipal)) {
         return Err({ Unauthorized: "Create an account first" });
       }
 
-      const user = userStorage.get(ic.caller());
+      const user = userStorage.get(currentPrincipal);
 
       if (!user.Some.status) {
         return Err({ Forbidden: "Account is currently deactived" });
@@ -249,14 +256,14 @@ export default Canister({
 
       // Create new event, insert it into storage and return it.
       const newArticle = {
-        id: uuidv4(),
+        id: payload.id.length > 0 ? payload.id : uuidv4(),
         title: payload.title,
         date: payload.date,
         description: payload.description,
         content: payload.content,
         categoryId: payload.categoryId,
-        authorId: ic.caller(),
-        editorId: ic.caller(),
+        authorId: currentPrincipal.toText(),
+        editorId: currentPrincipal.toText(),
         status: false,
         createdAt: ic.time(),
         updatedAt: ic.time(),
@@ -281,28 +288,30 @@ export default Canister({
    */
   updateArticle: update([ArticlePayload], Result(Article, Error), (payload) => {
     try {
-      const article = articleStorage.get(payload.id);
-      if (!article.Some) {
+      if (!articleStorage.containsKey(payload.id)) {
         return Err({ NotFound: "Article not found" });
       }
 
+      const article = articleStorage.get(payload.id);
       let currentStatus = article.Some.status;
       let currentEditor = article.Some.editorId;
+      let userInfo = userStorage.get(ic.caller()).Some;
+      let currentPrincipal = ic.caller();
 
-      if (userStorage.get(ic.caller()).Some.role == "author") {
-        if (ic.caller() != article.Some.authorId) {
+      if (userInfo.role == "author") {
+        if (currentPrincipal != article.Some.authorId) {
           return Err({ Forbidden: "You can only edit your own article." });
         }
       }
 
       if (currentEditor !== article.Some.authorId) {
-        if (userStorage.get(ic.caller()).Some.role !== "editor") {
+        if (userInfo.role !== "editor") {
           return Err({ Forbidden: "Only editor can edit the articles" });
         }
       } else {
-        if (userStorage.get(ic.caller()).Some.role === "editor") {
+        if (userInfo.role === "editor") {
           currentStatus = payload.status;
-          currentEditor = ic.caller();
+          currentEditor = currentPrincipal;
         }
       }
 
@@ -332,7 +341,7 @@ export default Canister({
       // Return all events.
       const events = articleStorage
         .values()
-        .filter((article: typeof Article) => article.status);
+        .filter((article) => article.status);
       return Ok(events);
     } catch (error) {
       // If any error occurs, return it.
@@ -354,7 +363,7 @@ export default Canister({
       // Return all events.
       const events = articleStorage
         .values()
-        .filter((article: typeof Article) => !article.status);
+        .filter((article) => !article.status);
       return Ok(events);
     } catch (error) {
       // If any error occurs, return it.
@@ -431,8 +440,7 @@ export default Canister({
         const articles = articleStorage
           .values()
           .filter(
-            (article: typeof Article) =>
-              article.categoryId === categoryId && article.status
+            (article) => article.categoryId === categoryId && article.status
           );
         return Ok(articles);
       } catch (error) {
@@ -445,7 +453,7 @@ export default Canister({
     try {
       const articles = articleStorage
         .values()
-        .filter((article: typeof Article) => article.authorId === ic.caller());
+        .filter((article) => article.authorId == ic.caller().toText());
       return Ok(articles);
     } catch (error) {
       // If any error occurs, return it.
@@ -456,7 +464,7 @@ export default Canister({
     try {
       const articles = articleStorage
         .values()
-        .filter((article: typeof Article) => article.editorId == ic.caller());
+        .filter((article) => article.editorId == ic.caller().toText());
       return Ok(articles);
     } catch (error) {
       // If any error occurs, return it.
