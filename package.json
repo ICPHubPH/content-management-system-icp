@@ -28,9 +28,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/dvcode.tech/icp-hub/icp-hub-cms-azle"
+    "url": "https://github.com/ICPHubPH/content-management-system-icp"
   },
   "bugs": {
-    "url": "https://gitlab.com/dvcode.tech/icp-hub/icp-hub-cms-azle/-/issues"
+    "url": "https://github.com/ICPHubPH/content-management-system-icp/issues"
   }
 }
