@@ -308,11 +308,10 @@ export default Canister({
         if (userInfo.role !== "editor") {
           return Err({ Forbidden: "Only editor can edit the articles" });
         }
-      } else {
-        if (userInfo.role === "editor") {
-          currentStatus = payload.status;
-          currentEditor = currentPrincipal;
-        }
+      }
+
+      if (userInfo.role == "editor") {
+        currentStatus = payload.status;
       }
 
       articleStorage.insert(article.Some.id, {
