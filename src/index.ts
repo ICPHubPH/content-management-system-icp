@@ -312,6 +312,7 @@ export default Canister({
 
       if (userInfo.role == "editor") {
         currentStatus = payload.status;
+        currentEditor = currentPrincipal.toText();
       }
 
       articleStorage.insert(article.Some.id, {
