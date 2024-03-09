@@ -223,6 +223,19 @@ export default Canister({
       return Err({ InternalError: `${error}` });
     }
   }),
+  getActiveArticleById: query([text], Result(Article, Error), (id) => {
+    try {
+      const article = articleStorage.get(id);
+
+      if (article.Some.status === false) {
+        return Err({ BadRequest: "Article does not exist" });
+      }
+      return Ok(article.Some);
+    } catch (error) {
+      // If any error occurs, return it.
+      return Err({ InternalError: `${error}` });
+    }
+  }),
   /**
    * Create article.
    * Returns the new article.
