@@ -319,7 +319,7 @@ export default Canister({
         }
       }
 
-      if (currentEditor !== article.Some.authorId) {
+      if (currentEditor !== article.Some.editorId) {
         if (userInfo.role !== "editor") {
           return Err({ Forbidden: "Only editor can edit the articles" });
         }
@@ -371,7 +371,7 @@ export default Canister({
    */
   getInactiveArticles: query([], Result(Vec(Article), Error), () => {
     if (userStorage.get(ic.caller()).Some.role !== "editor") {
-      return Err({ Forbidden: "Only editor can edit the articles" });
+      return Err({ Forbidden: "Only editor can view the inactive articles" });
     }
 
     try {
